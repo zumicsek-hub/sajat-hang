@@ -1,0 +1,14 @@
+name: voice_audio
+description: Native, offline live audio for the Sajat Hang feasibility prototype.
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: ^3.12.0
+dependencies:
+  flutter:
+    sdk: flutter
+flutter:
+  plugin:
+    platforms:
+      ios:
+        pluginClass: SHAudioPlugin

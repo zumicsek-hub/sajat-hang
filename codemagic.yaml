@@ -1,0 +1,48 @@
+# Manual, unsigned compilation only. No signing credentials or publishing.
+workflows:
+  ios-unsigned-check:
+    name: Sajat Hang - unsigned iOS check
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      flutter: 3.44.1
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Record toolchain versions
+        script: |
+          set -euo pipefail
+          mkdir -p build_logs
+          { flutter --version; xcodebuild -version; pod --version; } 2>&1 | tee build_logs/toolchain.log
+      - name: Resolve locked Flutter dependencies
+        script: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile 2>&1 | tee build_logs/dependencies.log
+      - name: Analyze Flutter code
+        script: |
+          set -euo pipefail
+          flutter analyze 2>&1 | tee build_logs/analyze.log
+      - name: Test Flutter controls and layouts
+        script: |
+          set -euo pipefail
+          flutter test 2>&1 | tee build_logs/flutter-tests.log
+      - name: Compile and test DSP with Apple Clang
+        script: |
+          set -euo pipefail
+          mkdir -p .build/native
+          xcrun clang++ -std=c++17 -O2 -Wall -Wextra -Werror \
+            -I packages/voice_audio/native/include \
+            native/tests/processor_test.cpp -o .build/native/dsp_tests \
+            2>&1 | tee build_logs/dsp-build.log
+          .build/native/dsp_tests 2>&1 | tee build_logs/dsp-tests.log
+      - name: Compile unsigned iPhone application
+        script: |
+          set -euo pipefail
+          flutter build ios --debug --no-codesign 2>&1 | tee build_logs/ios-build.log
+          test -d build/ios/iphoneos/Runner.app
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/ios/iphoneos/Runner.app build/ios/Runner-unsigned.zip
+    artifacts:
+      - build_logs/*.log
+      - build/ios/Runner-unsigned.zip
+      - ios/Podfile.lock
