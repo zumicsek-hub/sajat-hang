@@ -1,4 +1,4 @@
-# Manual, unsigned compilation only. No signing credentials or publishing.
+# Manual workflows. Signing secrets stay in Codemagic, never in this file.
 workflows:
   ios-unsigned-check:
     name: Sajat Hang - unsigned iOS check
@@ -46,3 +46,46 @@ workflows:
       - build_logs/*.log
       - build/ios/Runner-unsigned.zip
       - ios/Podfile.lock
+  ios-testflight:
+    name: Sajat Hang - TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    integrations:
+      app_store_connect: Codemagic
+    environment:
+      flutter: 3.44.1
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: hu.sajathang.sajatHang
+    scripts:
+      - name: Dependencies and checks
+        script: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile
+          flutter analyze
+          flutter test
+          mkdir -p .build/native
+          xcrun clang++ -std=c++17 -O2 -Wall -Wextra -Werror -I packages/voice_audio/native/include native/tests/processor_test.cpp -o .build/native/dsp_tests
+          .build/native/dsp_tests
+      - name: Install pods and apply signing profiles
+        script: |
+          set -euo pipefail
+          cd ios
+          pod install
+          cd ..
+          xcode-project use-profiles
+      - name: Build signed release IPA
+        script: |
+          set -euo pipefail
+          flutter build ipa --release --build-number="$((BUILD_NUMBER + 1))" --export-options-plist="$HOME/export_options.plist"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/*.xcarchive/dSYMs/*.dSYM
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: false

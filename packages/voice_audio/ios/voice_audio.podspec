@@ -9,6 +9,7 @@ Pod::Spec.new do |s|
   s.source = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/SHAudioPlugin.h'
+  s.resource_bundles = { 'voice_audio_privacy' => ['Resources/PrivacyInfo.xcprivacy'] }
   s.preserve_paths = '../native/**/*'
   s.dependency 'Flutter'
   s.platform = :ios, '15.0'
