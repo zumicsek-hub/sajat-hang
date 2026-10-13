@@ -27,7 +27,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>A Saját Hang a mikrofont használja a beszéd helyi erősítéséhez. Nem készít felvételt és nem küld hangot az internetre. / The microphone is used for local voice amplification. Audio is not recorded or uploaded.</string>
+	<string>A mikrofont élő erősítéshez és az Ön által indított hangfelvételhez használjuk. A feldolgozás helyben történik. / Microphone access is used for live amplification and recordings you start. Audio is processed on this device.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

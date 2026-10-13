@@ -1,3 +1,5 @@
+> 2026-10-13: A 0.2.0 felvételi mód és Windows-változat friss leírása: [FELVETEL_HU.md](FELVETEL_HU.md). Az alábbi eredeti leírás a korábbi élő prototípusra vonatkozik.
+
 # Hogyan tudom tesztelni?
 
 ## Most, a Windows gépen

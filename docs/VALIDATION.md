@@ -27,3 +27,15 @@ No audio recordings were collected. No model was downloaded. No account, cloud s
 ## 2026-09-22 — remote build preparation
 
 Added a manual Codemagic workflow for pinned Flutter dependencies, analysis, Flutter tests, Apple Clang DSP tests and unsigned iPhone compilation. No signing or publishing is configured. Remote execution is pending a connected source repository and Codemagic account; no successful iOS build is claimed.
+
+
+## 2026-10-13 — version 0.2.0 recording and Windows
+
+- Previous 0.1.0 signed Codemagic build and TestFlight upload succeeded according to the user-provided screenshots. The user reports no audible live output; this is still unresolved on hardware.
+- Flutter analyze: PASS, no issues.
+- Flutter tests: PASS, 12 tests. Includes PCM parsing, silent input, bounded output, low-frequency attenuation, unmodified source/duration, microphone denial, duplicate start prevention, saved original/enhanced pair, deletion, and background during pending native start. Recorder/player adapters are fakes in controller tests.
+- Windows release build: PASS on local Visual Studio 2026. A sandbox FileTracker access failure required building with additional execution permissions. The CMake install prefix was corrected to the portable output folder, not Program Files.
+- Recording uses native record plugin (Windows Media Foundation / iOS AVFoundation); offline DSP runs in a Dart isolate. Playback uses audioplayers. No ML model is included.
+- Physical microphone capture/listening: NOT YET VERIFIED by the user. A passing build does not establish intelligibility improvement.
+- Updated 0.2.0 iOS recording/native storage changes: source prepared; remote Codemagic build and device validation PENDING.
+- iOS recording folder is marked excluded from backup through the native plugin. No app-initiated cloud uploads; explicit export/share uses the destination chosen by the user.

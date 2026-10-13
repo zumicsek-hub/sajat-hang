@@ -1,3 +1,5 @@
+> 2026-10-13: A 0.2.0 felvételi mód és Windows-változat friss leírása: [FELVETEL_HU.md](FELVETEL_HU.md). Az alábbi eredeti leírás a korábbi élő prototípusra vonatkozik.
+
 # iPhone 16e device validation
 
 Target supplied by the user: iPhone 16e, reported iOS 26.5.2. Record the actual OS/build from Settings when testing. No iPhone measurements or Xcode build results exist yet.

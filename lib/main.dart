@@ -3,6 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'audio_controller.dart';
+import 'recording_controller.dart';
+import 'recording_page.dart';
+import 'package:flutter/foundation.dart';
 
 void main() => runApp(const SajatHangApp());
 
@@ -20,6 +23,7 @@ class SajatHangApp extends StatefulWidget {
 class _SajatHangAppState extends State<SajatHangApp>
     with WidgetsBindingObserver {
   late final AudioController audio = widget.controller ?? AudioController();
+  late final RecordingController recordings = RecordingController();
   bool english = false;
   int page = 0;
   String t(String hu, String en) => english ? en : hu;
@@ -27,10 +31,21 @@ class _SajatHangAppState extends State<SajatHangApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+      page = 1;
+      unawaited(recordings.initialize());
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      unawaited(recordings.background(true));
+    } else if (state == AppLifecycleState.resumed) {
+      unawaited(recordings.background(false));
+    }
     // Native iOS also stops independently. Inactive can be the permission alert;
     // stop that state only if a live session is already running.
     if (state != AppLifecycleState.resumed && audio.running) {
@@ -41,6 +56,7 @@ class _SajatHangAppState extends State<SajatHangApp>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    recordings.dispose();
     if (widget.controller == null) audio.dispose();
     super.dispose();
   }
@@ -99,7 +115,7 @@ class _SajatHangAppState extends State<SajatHangApp>
       ),
     ),
     home: AnimatedBuilder(
-      animation: audio,
+      animation: Listenable.merge([audio, recordings]),
       builder: (context, _) => Scaffold(
         appBar: AppBar(
           backgroundColor: canvas,
@@ -139,7 +155,7 @@ class _SajatHangAppState extends State<SajatHangApp>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (!audio.supported) ...[
+                    if (!audio.supported && page == 0) ...[
                       _notice(
                         Icons.desktop_windows_outlined,
                         t(
@@ -198,7 +214,13 @@ class _SajatHangAppState extends State<SajatHangApp>
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: page,
-          onDestinationSelected: (value) => setState(() => page = value),
+          onDestinationSelected: recordings.busy || recordings.recording
+              ? null
+              : (value) async {
+                  await recordings.stopPlayback();
+                  if (value == 1) await recordings.initialize();
+                  if (mounted) setState(() => page = value);
+                },
           destinations: [
             NavigationDestination(
               icon: const Icon(Icons.graphic_eq),
@@ -215,7 +237,7 @@ class _SajatHangAppState extends State<SajatHangApp>
           ],
         ),
         // The emergency action remains reachable on every page, outside scrolling.
-        bottomSheet: audio.running || audio.busy
+        bottomSheet: audio.running || audio.busy || recordings.recording
             ? SafeArea(
                 top: false,
                 child: Padding(
@@ -223,12 +245,18 @@ class _SajatHangAppState extends State<SajatHangApp>
                   child: SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: () => unawaited(audio.stop()),
+                      onPressed: () => recordings.recording
+                          ? unawaited(recordings.stop())
+                          : unawaited(audio.stop()),
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF9C302C),
                       ),
                       icon: const Icon(Icons.stop_circle_outlined),
-                      label: Text(t('Azonnali leállítás', 'Stop immediately')),
+                      label: Text(
+                        recordings.recording
+                            ? t('Felvétel leállítása', 'Stop recording')
+                            : t('Azonnali leállítás', 'Stop immediately'),
+                      ),
                     ),
                   ),
                 ),
@@ -333,7 +361,12 @@ class _SajatHangAppState extends State<SajatHangApp>
           ],
           FilledButton.icon(
             key: const Key('start-stop'),
-            onPressed: !audio.supported || audio.busy
+            onPressed:
+                !audio.supported ||
+                    audio.busy ||
+                    recordings.busy ||
+                    recordings.recording ||
+                    recordings.playing
                 ? null
                 : () => audio.running ? audio.stop() : audio.start(),
             icon: Icon(
@@ -531,47 +564,11 @@ class _SajatHangAppState extends State<SajatHangApp>
     );
   }
 
-  Widget _recording(BuildContext context) => _card(
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(Icons.mic_none_rounded, size: 40, color: green),
-        const SizedBox(height: 20),
-        Text(
-          t('Felvétel', 'Recording'),
-          style: Theme.of(context).textTheme.headlineLarge,
-        ),
-        const SizedBox(height: 16),
-        _badge(
-          Icons.construction_outlined,
-          t('Következő fejlesztési szakasz', 'Next development phase'),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          t(
-            'Ez a prototípus még nem rögzít hangot.',
-            'This prototype does not record audio yet.',
-          ),
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          t(
-            'A tervezett folyamat: felvétel → helyi hangjavítás → eredeti és javított változat összehasonlítása → mentés vagy megosztás.',
-            'Planned flow: record → on-device enhancement → compare original and enhanced → save or share.',
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          t(
-            'Az eredeti felvétel megmarad. Felhőalapú feldolgozás nem lesz.',
-            'The original will be retained. There will be no cloud processing.',
-          ),
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        if (audio.running || audio.busy) const SizedBox(height: 96),
-      ],
-    ),
+  Widget _recording(BuildContext context) => RecordingPage(
+    controller: recordings,
+    english: english,
+    liveActive: audio.running || audio.busy,
+    start: recordings.start,
   );
 
   Widget _settings(BuildContext context) => _card(
