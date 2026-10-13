@@ -2,7 +2,7 @@
 
 Magyar és angol kezelőfelület, iPhone-hangszóróra tervezett helyi beszéderősítéssel. Flutter + AVAudioEngine + C++17. Célkészülék: iPhone 16e, a megadott rendszerverzió iOS 26.5.2.
 
-**Ez az első műszaki prototípus, nem kész segédeszköz.** A Flutter-felület és a C++ mag Windows alatt ellenőrizhető. Az iOS natív kód még nincs Xcode-dal lefordítva vagy iPhone-on kipróbálva. A tényleges késleltetés, a gerjedés előtti hasznos erősítés és a klinikai hatás még nincs igazolva.
+**Ez az első műszaki prototípus, nem kész segédeszköz.** A Flutter-felület és a C++ mag Windows alatt ellenőrizhető. A 0.1.0 iOS-változat Codemagicben lefordult és TestFlightba került. A 0.2.0 felvételi módja új iPhone-buildet és készüléktesztet igényel. A tényleges késleltetés, a gerjedés előtti hasznos erősítés és a klinikai hatás még nincs igazolva.
 
 ## Mi készült el?
 
@@ -12,9 +12,12 @@ Magyar és angol kezelőfelület, iPhone-hangszóróra tervezett helyi beszéder
 - Közös C++ DSP: magasáteresztő, enyhe EQ, kompresszor, korlátozott kézi erősítés, csúcskorlát.
 - Kísérleti sípolásérzékelő, vezérlési watchdog, kézi újraindítást igénylő védelem.
 - Helyben mentett iOS profilbeállítások. A böngészős előnézetben csak munkamenet-beállítások vannak.
-- Nincs hangmentés, nincs felhő, nincs hangfeltöltés vagy szintetikus beszéd.
+- Windows és iPhone felvételi mód: legfeljebb 3 perc PCM WAV, eredeti és javított visszajátszás, helyi mentés, exportálás és törlés.
+- Helyi DSP hangjavítás: 75 Hz magasáteresztő, enyhe 3 kHz kiemelés, korlátozott hangerő-kiegyenlítés, kompresszió és csúcsszint-beállítás. Nincs felhős feldolgozás vagy szintetikus beszéd.
 
-**Még nincs:** hangrögzítés, ML, lejátszás/megosztás, zajszűrés, dereverberáció, automatikus hangerőszabályzás, Android Oboe-hangmotor. A Felvétel lap ezt egyértelműen jelzi. Ezek a következő fejlesztési szakaszok, nem működőnek feltüntetett demók.
+**Még nincs:** ML, kiejtésjavítás, erős zajszűrés, dereverberáció, Windows élő mód és Android Oboe-hangmotor. A hangjavítás jelenleg DSP-alapú, nem MI.
+
+A Windows-alkalmazás használata és az iPhone-frissítés: [FELVETEL_HU.md](docs/FELVETEL_HU.md).
 
 ## Megnézés Windows alatt
 
@@ -22,7 +25,7 @@ Flutter 3.44.1 / Dart 3.12.1 verzióval készült. A projekt gyökérmappájába
 
 ```powershell
 flutter pub get
-flutter run -d chrome
+flutter run -d windows
 ```
 
 A böngészőben **csak kezelőfelületi előnézet** fut. A Start gomb le van tiltva, a szintjelzők nem mutatnak kitalált mikrofonadatokat. Bejárható a három lap, váltható a nyelv és kipróbálhatók a profilvezérlők. A webes változat nem helyettesíti a natív iPhone-tesztet.
